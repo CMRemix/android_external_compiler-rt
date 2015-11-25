@@ -99,6 +99,7 @@ void __clear_cache(void *start, void *end) {
 
         sysarch(ARM_SYNC_ICACHE, &arg);
     #elif defined(__ANDROID__)
+        /*
          register int start_reg __asm("r0") = (int) (intptr_t) start;
          const register int end_reg __asm("r1") = (int) (intptr_t) end;
          const register int flags __asm("r2") = 0;
@@ -106,6 +107,21 @@ void __clear_cache(void *start, void *end) {
         __asm __volatile("svc 0x0" : "=r"(start_reg)
             : "r"(syscall_nr), "r"(start_reg), "r"(end_reg), "r"(flags) : "r0");
          if (start_reg != 0) {
+             compilerrt_abort();
+         }
+        */
+         const int syscall = 0xf0002;
+         __asm __volatile (
+           "mov   r0, %0\n"      
+           "mov   r1, %1\n"
+           "mov   r7, %2\n"
+           "mov     r2, #0x0\n"
+           "svc     0x00000000\n"
+           :
+           : "r" (start), "r" (end), "r" (syscall)
+           : "r0", "r1", "r7"
+           );
+         if (start != 0) {
              compilerrt_abort();
          }
     #else
